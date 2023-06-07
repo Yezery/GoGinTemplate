@@ -1,2 +1,1 @@
-# GoGinTemplate
- This is the most basic GoGin framework project
+main.go 应用程序入口文件。在这个文件中，您将创建一个 Gin 实例、注册中间件、定义路由、启动应用程序等。
