@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
+	"example.com/m/controllers"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v3"
 	"gorm.io/driver/mysql"
@@ -11,62 +13,78 @@ import (
 )
 
 type Config struct {
-	Server   ServerConfig
-	Database DatabaseConfig
+	Database struct {
+		Username   string            `yaml:"username"`
+		Password   string            `yaml:"password"`
+		Host       string            `yaml:"host"`
+		Port       int               `yaml:"port"`
+		Database   string            `yaml:"database"`
+		Parameters map[string]string `yaml:"parameters"`
+	} `yaml:"database"`
+	Server struct {
+		Port string `yaml:"port"`
+	} `yaml:"server"`
 }
 
-type ServerConfig struct {
-	Port string
-}
-
-type DatabaseConfig struct {
-	Driver string
-	DSN    string
-}
-
-type SaleList struct {
-	SaleId      int64  `gorm:"primaryKey;column:saleId"`
-	Seller      string `gorm:"column:seller"`
-	NftContract string `gorm:"column:nftContract"`
-	Tokenid     int64  `gorm:"column:tokenid"`
-	Price       int64  `gorm:"column:price"`
-	IsActive    bool   `gorm:"column:isActive"`
-}
-
-func main() {
-	router := gin.Default()
-	dataBytes, err := os.ReadFile("config/config.yaml")
-	if err != nil {
-		fmt.Println("读取配置文件失败：", err)
-		return
+// 连接数据库
+func (config *Config) setupDatabase() (*gorm.DB, error) {
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?",
+		config.Database.Username,
+		config.Database.Password,
+		config.Database.Host,
+		config.Database.Port,
+		config.Database.Database)
+	for k, v := range config.Database.Parameters {
+		dsn += k + "=" + v + "&"
 	}
-	// fmt.Println("yaml 文件的内容: \n", string(dataBytes))
+	dsn = dsn[:len(dsn)-1]
+	// 初始化数据库连接
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect database: %v\n", err)
+	}
+	return db, nil
+}
+
+func getYamlConfig(fileName string) Config {
+
+	dataBytes, err := os.ReadFile(fileName)
+	if err != nil {
+		panic("读取配置文件失败")
+	}
+
 	config := Config{}
 	err = yaml.Unmarshal(dataBytes, &config)
 	if err != nil {
-		fmt.Println("解析 yaml 文件失败：", err)
-		return
+		panic("解析 yaml 文件失败")
 	}
-	// fmt.Printf("config → %+v\n", config)
 
-	// 初始化数据库连接
-	db, err := gorm.Open(mysql.Open(config.Database.DSN), &gorm.Config{})
-	if err != nil {
-		panic("failed to connect database")
-	}
-	// 包含数据模型的切片作为参数，并自动检查、创建和修改数据库表结构以匹配模型定义。
+	return config
+}
 
-	_ = db.AutoMigrate(&SaleList{})
+func main() {
 
-	// 查询用户表中的全部记录
-	var SaleLists []SaleList
-	result := db.Find(&SaleLists)
-	if result.Error != nil {
-		// 处理错误逻辑
-	}
-	for _, sale := range SaleLists {
-		fmt.Printf("saleId: %d, seller: %s, nftContract: %s\n", sale.SaleId, sale.Seller, sale.NftContract)
-	}
-	
+	// 读取配置文件
+	config := getYamlConfig("config/config.yaml")
+	fmt.Printf("config -> %x", config)
+
+	// 初始化数据库
+	db, _ := config.setupDatabase()
+
+	// 将附加到 Gin 的 Context 上下文中，以便在控制器和服务中进行使用。
+	router := gin.Default()
+	router.Use(func(c *gin.Context) {
+		c.Set("db", db)
+		c.Next()
+	})
+
+	SaleController := &controllers.SaleController{}
+	SaleTypeController := &controllers.SaleTypeController{}
+
+	router.GET("/getSaleList", SaleController.GetSaleList)
+	router.GET("/getTypeList", SaleTypeController.GetTypeList)
+
+	router.POST("/createSale", SaleController.CreateSale)
+
 	router.Run(":" + config.Server.Port)
 }
