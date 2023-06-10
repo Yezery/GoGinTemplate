@@ -5,6 +5,7 @@ import (
 
 	"example.com/m/models"
 	"example.com/m/repositories"
+	"example.com/m/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,10 +19,10 @@ func (SC *SaleController) GetSaleList(c *gin.Context) {
 	db := repositories.GetDb(c)
 	result := db.Find(&Sales)
 	if result.Error != nil {
-		c.JSON(http.StatusBadGateway, result.Error)
+		utils.SendResponse(c.Writer, http.StatusInternalServerError, result.Error)
 		panic(result.Error)
 	}
-	c.JSON(http.StatusOK, Sales)
+	utils.SendResponse(c.Writer, http.StatusOK, Sales)
 }
 
 // 创建一条新记录
@@ -34,8 +35,8 @@ func (SC *SaleController) CreateSale(c *gin.Context) {
 	db := repositories.GetDb(c)
 	result := db.Create(&Sale)
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, result.Error)
+		utils.SendResponse(c.Writer, http.StatusInternalServerError, result.Error)
 		panic(result.Error)
 	}
-	c.JSON(http.StatusOK, "")
+	utils.SendResponse(c.Writer, http.StatusOK, Sale)
 }

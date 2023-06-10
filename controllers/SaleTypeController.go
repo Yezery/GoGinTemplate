@@ -5,6 +5,7 @@ import (
 
 	"example.com/m/models"
 	"example.com/m/repositories"
+	"example.com/m/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,8 +20,8 @@ func (STC *SaleTypeController) GetTypeList(c *gin.Context) {
 	db := repositories.GetDb(c)
 	result := db.Find(&Type)
 	if result.Error != nil {
-		c.JSON(http.StatusBadGateway, result.Error)
+		utils.SendResponse(c.Writer, http.StatusBadGateway, result.Error)
 		panic(result.Error)
 	}
-	c.JSON(http.StatusOK, Type)
+	utils.SendResponse(c.Writer, http.StatusOK, Type)
 }

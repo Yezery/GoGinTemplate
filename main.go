@@ -75,16 +75,23 @@ func main() {
 	router := gin.Default()
 	router.Use(func(c *gin.Context) {
 		c.Set("db", db)
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, origin, accept")
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
 		c.Next()
 	})
 
 	SaleController := &controllers.SaleController{}
 	SaleTypeController := &controllers.SaleTypeController{}
-
+	NFTOwnerListController := &controllers.NFTOwnerListController{}
 	router.GET("/getSaleList", SaleController.GetSaleList)
 	router.GET("/getTypeList", SaleTypeController.GetTypeList)
-
 	router.POST("/createSale", SaleController.CreateSale)
-
+	router.POST("/createNFT", NFTOwnerListController.CreateNFTInf)
 	router.Run(":" + config.Server.Port)
 }
