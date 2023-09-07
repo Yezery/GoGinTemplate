@@ -91,6 +91,7 @@ func main() {
 	NFTOwnerListController := &controllers.NFTOwnerListController{}
 	router.GET("/getSaleList", SaleController.GetSaleList)
 	router.GET("/getTypeList", SaleTypeController.GetTypeList)
+	router.POST("/getOwnerNFTs",NFTOwnerListController.GetOwnerNFTs )
 	router.POST("/createSale", SaleController.CreateSale)
 	router.POST("/createNFT", NFTOwnerListController.CreateNFTInf)
 	router.Run(":" + config.Server.Port)

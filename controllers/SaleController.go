@@ -16,6 +16,9 @@ var Sale models.Sale
 // 查询上架表中的全部记录
 func (SC *SaleController) GetSaleList(c *gin.Context) {
 	var Sales []models.Sale
+	
+
+
 	db := repositories.GetDb(c)
 	result := db.Find(&Sales)
 	if result.Error != nil {
