@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"example.com/m/controllers"
+	"example.com/m/models"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/yaml.v3"
 	"gorm.io/driver/mysql"
@@ -89,10 +90,18 @@ func main() {
 	SaleController := &controllers.SaleController{}
 	SaleTypeController := &controllers.SaleTypeController{}
 	NFTOwnerListController := &controllers.NFTOwnerListController{}
+	Client := models.NewChatController()
 	router.GET("/getSaleList", SaleController.GetSaleList)
 	router.GET("/getTypeList", SaleTypeController.GetTypeList)
-	router.POST("/getOwnerNFTs",NFTOwnerListController.GetOwnerNFTs )
+	router.POST("/getOwnerNFTs", NFTOwnerListController.GetOwnerNFTs)
+	router.POST("/getOwnerNFTsByAddress", NFTOwnerListController.GetOwnerNFTsByAddress)
 	router.POST("/createSale", SaleController.CreateSale)
+	router.POST("/UpdateNFTOwnerList", NFTOwnerListController.UpdateNFTOwnerList)
+	router.POST("/UpdateNFTOwnerListAfterBuy", NFTOwnerListController.UpdateNFTOwnerListAfterBuy)
 	router.POST("/createNFT", NFTOwnerListController.CreateNFTInf)
+	router.POST("/DeleteSale", SaleController.DeleteSale)
+	router.POST("/GetOwnerUpSaleNFTs", NFTOwnerListController.GetOwnerUpSaleNFTs)
+	router.GET("/OasisChat/:username", Client.WebSocketHandler)
+	router.POST("/Search", NFTOwnerListController.Search)
 	router.Run(":" + config.Server.Port)
 }
